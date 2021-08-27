@@ -17,6 +17,7 @@
         {
             "label": "make build dir",
             "type": "shell",
+            "dependsOn": "clean",
             "group": "build",
             "osx": {
                 "command": "mkdir",
@@ -42,6 +43,17 @@
                     "${workspaceRoot}/build/"
                 ]
             }
-        }
+        },
+        {
+            "label": "open",
+            "type": "shell",
+            "group": "build",
+            "osx": {
+                "command": "open",
+                "args": [
+                    "${workspaceRoot}/build/index.html",
+                ]
+            }
+        },
     ]
 }

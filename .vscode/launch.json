@@ -13,6 +13,17 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/index.js"
-        }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Open Build",
+            "preLaunchTask": "build",
+            "postDebugTask": "open",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/index.js"
+        },
     ]
 }
