@@ -1,0 +1,59 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "clean",
+            "type": "shell",
+            "osx": {
+                "command": "rm",
+                "args": [
+                    "-rf",
+                    "${workspaceRoot}/build/"
+                ]
+            }
+        },
+        {
+            "label": "make build dir",
+            "type": "shell",
+            "group": "build",
+            "osx": {
+                "command": "mkdir",
+                "args": [
+                    "-p",
+                    "${workspaceRoot}/build"
+                ]
+            }
+        },
+        {
+            "label": "copy dist to build",
+            "type": "shell",
+            "group": "build",
+            "dependsOn": "make build dir",
+            "osx": {
+                "command": "cp",
+                "args": [
+                    "-a",
+                    "${workspaceRoot}/distrib/*",
+                    "${workspaceRoot}/build/"
+                ]
+            }
+        },
+        {
+            "label": "run",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "type": "shell",
+            "dependsOn": "copy dist to build",
+            "osx": {
+                "command": "node",
+                "args": [
+                    "${workspaceRoot}/index.js"
+                ]
+            }
+        }
+    ]
+}
