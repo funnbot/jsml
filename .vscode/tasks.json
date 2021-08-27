@@ -27,9 +27,12 @@
             }
         },
         {
-            "label": "copy dist to build",
+            "label": "build",
             "type": "shell",
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "dependsOn": "make build dir",
             "osx": {
                 "command": "cp",
@@ -37,21 +40,6 @@
                     "-a",
                     "${workspaceRoot}/distrib/*",
                     "${workspaceRoot}/build/"
-                ]
-            }
-        },
-        {
-            "label": "run",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "type": "shell",
-            "dependsOn": "copy dist to build",
-            "osx": {
-                "command": "node",
-                "args": [
-                    "${workspaceRoot}/index.js"
                 ]
             }
         }
