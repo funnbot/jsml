@@ -1,0 +1,9 @@
+[submodule "submodules/KaTeX"]
+	path = submodules/KaTeX
+	url = ./submodules/KaTeX/
+[submodule "submodules/github-markdown-css"]
+	path = submodules/github-markdown-css
+	url = ./submodules/github-markdown-css
+[submodule "submodules/highlight.js"]
+	path = submodules/highlight.js
+	url = ./submodules/highlight.js
