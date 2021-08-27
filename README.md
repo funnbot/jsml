@@ -2,4 +2,5 @@
 https://github.com/sindresorhus/github-markdown-css
 https://highlightjs.org/
 https://katex.org/
-https://wkhtmltopdf.org/
+https://github.com/marcbachmann/node-html-pdf
+

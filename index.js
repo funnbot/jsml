@@ -57,13 +57,80 @@ class Matrix {
 // Add a way to include steps inside the function, that are notated with mljs comments (//>) that will output a certain step
 // Include a library that has a step function, that excepts certain formats
 // stepImply(output) //{step} 
-function parse(text) {
-    
+/**
+ * 
+ * @param {Buffer} file 
+ */
+function parse(filepath) {
+    const file = fs.readFileSync(filepath, "utf-8").toString();
+    const fileCode = require(path.resolve(process.cwd(), filepath));
+
+    let text = [];
+    let code = {};
+    let i = 0;
+    while (i < file.length) {
+        let char = file[i];
+        const peek = (amt = 1) => (i + amt) < file.length ? file[i + amt] : null;
+        const eof = () => peek() === null;
+        const readTill = (end = "\n") => {
+            let buf = char = file[i];
+            while (!eof() && char !== end) buf += (char = file[++i]);
+            return buf.trim();
+        }
+
+        if (char === "/" && peek() === "/") {
+            i++; // skip the slash
+            const op = peek();
+            i += 2; // skip the op
+            if (op === "/") text.push({ style: "paragraph", str: readTill() });
+            else if (op === "t") text.push({style: "title", str: readTill() });
+            else if (op === "s") text.push({style: "subtitle", str: readTill() });
+            else if (op === "i") text.push({style: "include", data: parse(readTill())})
+            else if (op === "r") text.push({style: "run", code: readTill() })
+            else if (op === "c") {
+                const funcName = readTill();
+                i++; // skip newline
+                let buf = "";
+                const start = i;
+                let end = start;
+                while (i < file.length) {
+                    if (file[i] === "/" && peek() === "/") {
+                        i++;
+                        if (peek() === "e") {
+                            end = i - 2;
+                            readTill() // drop the endcode
+                            break;
+                        }
+                    }
+                    i++;
+                }
+                text.push({style: "code", funcName})
+                code[funcName] = {
+                    str: file.slice(start, end + 1),
+                    func: fileCode[funcName],
+                };
+            }
+        }
+        i++;
+    }
+    return {text, code};
 }
 
-const code = str => Elem.pre(hl.highlight(str, { language: "javascript" }).value)
-    .prop("class", "highlight").prop("lang", "javascript")
-    .toString();
+const highlight = str => hl.highlight(str, { language: "javascript" }).value
+
+function display({text, code}) {
+    let doc = new Doc();
+    for (let i = 0; i < text.length; i++) {
+        const t = text[i];
+        if (t.style === "title") doc.push(Elem.h1(t.str));
+        else if (t.style === "subtitle") doc.push(Elem.h2(t.str));
+        else if (t.style === "paragraph") doc.push(Elem.p(t.str));
+        else if (t.style === "code") doc.push(new Elem("pre").inner(highlight(code[t.funcName].str)));
+        else if (t.style === "include") doc.push(display(t.data))
+        else if (t.style === "run") doc.push(new Elem("code").inner(highlight(t.code)))
+    }
+    return doc;
+}
 
 const math = str => katex.renderToString(str, { throwOnError: false, output: "html" });
 
@@ -74,14 +141,19 @@ const outputFile = "build/index.html";
 const templateInsert = "<TEMPLATE_INSERT>";
 const insert = template.findIndex((v, i, a) => v === templateInsert.charCodeAt(0) && a.subarray(i + 1, i + templateInsert.length).toString() === templateInsert.slice(1));
 
-let doc = new Doc();
-doc.push(Elem.h1("Title"));
-doc.push(Elem.h1("Below the valley"));
-doc.push(Elem.p("paragraph of stuff would go here"));
-doc.push(code("const js = 10\njs += 2;\n"));
-doc.push(math(`\\begin{bmatrix}a & b \\\\c & d\\end{bmatrix}`));
-doc.push(new Matrix([[1, 2, 3], ["a", "c", "b"], ["x", 0.022, 1.2]]));
-doc.push(Elem.h2("Credits"));
+console.log(parse("input.js"));
+const p = parse("input.js");
+const d = display(p);
 
-const output = template.subarray(0, insert).toString() + doc.toString() + template.subarray(insert + templateInsert.length, template.length).toString();
+
+let doc = new Doc();
+// doc.push(Elem.h1("Title"));
+// doc.push(Elem.h1("Below the valley"));
+// doc.push(Elem.p("paragraph awd inline code of stuff would go here"));
+// doc.push(code("const js = 10\njs += 2;\n"));
+// doc.push(math(`\\begin{bmatrix}a & b \\\\c & d\\end{bmatrix}`));
+// doc.push(new Matrix([[1, 2, 3], ["a", "c", "b"], ["x", 0.022, 1.2]]));
+// doc.push(Elem.h2("Credits"));
+
+const output = template.subarray(0, insert).toString() + d.toString() + template.subarray(insert + templateInsert.length, template.length).toString();
 fs.writeFileSync(outputFile, output);
