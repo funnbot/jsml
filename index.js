@@ -30,12 +30,12 @@ class Doc {
 }
 
 // a real number represented by a/b, irrational is difficult and we wont go there
-// if b is one it is a integer
+// if b is one it is a integer then its a whole number
 class Real {
     #a = 0; #b = 1;
 
     constructor(a, b = 1) { this.#a = a; }
-    get isInteger() {  return this.#b === 1 && Number.isInteger(this.#a); }
+    isInteger() {  return this.#b === 1 && Number.isInteger(this.#a); }
     toString() { return (this.#a / this.#b).toString(); }
 }
 
@@ -57,8 +57,8 @@ class Matrix {
 // Add a way to include steps inside the function, that are notated with mljs comments (//>) that will output a certain step
 // Include a library that has a step function, that excepts certain formats
 // stepImply(output) //{step} 
-class Code {
-
+function parse(text) {
+    
 }
 
 const code = str => Elem.pre(hl.highlight(str, { language: "javascript" }).value)
