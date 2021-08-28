@@ -11,6 +11,7 @@
   "dependencies": {
     "highlight.js": "^11.2.0",
     "html-pdf": "^3.0.1",
-    "katex": "^0.13.13"
+    "katex": "^0.13.13",
+    "rewire": "^5.0.0"
   }
 }

@@ -1,0 +1,178 @@
+{
+    "scopeName": "jsml-comment.injection",
+    "injectionSelector": "L:source.js",
+    "patterns": [
+        {
+            "include": "#title"
+        },
+        {
+            "include": "#subtitle"
+        },
+        {
+            "include": "#paragraph"
+        },
+        {
+            "include": "#include"
+        },
+        {
+            "include": "#startcode"
+        },
+        {
+            "include": "#endcode"
+        },
+        {
+            "include": "#runcode"
+        }
+    ],
+    "repository": {
+        "title": {
+            "match": "(//t).*",
+            "name": "string.title",
+            "captures": {
+                "1": {
+                    "name": "punctuation.line.title"
+                }
+            }
+        },
+        "subtitle": {
+            "match": "(//s).*",
+            "name": "string.subtitle",
+            "captures": {
+                "1": {
+                    "name": "punctuation.line.subtitle"
+                }
+            }
+        },
+        "paragraph": {
+            "match": "(///)(.*)",
+            "name": "string.paragraph",
+            "captures": {
+                "1": {
+                    "name": "punctuation.line.paragraph"
+                },
+                "2": {
+                    "patterns": [
+                        {
+                            "include": "#katex"
+                        },
+                        {
+                            "include": "#code"
+                        }
+                    ]
+                }
+            }
+        },
+        "include": {
+            "match": "(//i).*",
+            "name": "path.include",
+            "captures": {
+                "1": {
+                    "name": "punctuation.line.include"
+                }
+            }
+        },
+        "startcode": {
+            "match": "(//c)(.*)",
+            "name": "storage.type.startcode",
+            "captures": {
+                "1": {
+                    "name": "punctuation.line.startcode"
+                },
+                "2": {
+                    "name": "entity.name.function"
+                }
+            }
+        },
+        "endcode": {
+            "match": "(//e).*",
+            "name": "storage.type.endcode",
+            "captures": {
+                "1": {
+                    "name": "punctuation.line.endcode"
+                }
+            }
+        },
+        "runcode": {
+            "match": "(//r)(.*)",
+            "name": "storage.type.runcode",
+            "captures": {
+                "1": {
+                    "name": "punctuation.line.runcode"
+                },
+                "2": {
+                    "name": "meta.embedded.block.javascript",
+                    "patterns": [
+                        {
+                            "include": "source.js"
+                        }
+                    ]
+                }
+            }
+        },
+        "code": {
+            "begin": "[Cc]`",
+            "end": "`",
+            "beginCaptures": {
+                "0": {
+                    "name": "punctuation.code.open"
+                }
+            },
+            "endCaptures": {
+                "0": {
+                    "name": "punctuation.code.close"
+                }
+            },
+            "contentName": "meta.embedded.code",
+            "patterns": [
+                {
+                    "include": "source.js"
+                }
+            ]
+        },
+        "katex": {
+            "begin": "[Mm]`",
+            "end": "`",
+            "beginCaptures": {
+                "0": {
+                    "name": "punctuation.katex.open"
+                }
+            },
+            "endCaptures": {
+                "0": {
+                    "name": "punctuation.katex.close"
+                }
+            },
+            "contentName": "meta.embedded.katex",
+            "patterns": [
+                {
+                    "include": "#functionWithArg"
+                },
+                {
+                    "include": "#function"
+                }
+            ]
+        },
+        "function": {
+            "match": "\\\\[^\\s`]+",
+            "name": "storage.type.katex.function"
+        },
+        "functionWithArg": {
+            "begin": "(\\\\[^\\s]+)({)",
+            "end": "}",
+            "beginCaptures": {
+                "1": {
+                    "name": "storage.type.katex.function"
+                },
+                "2": {
+                    "name": "punctuation.katex.paren.open"
+                }
+            },
+            "endCaptures": {
+                "0": {
+                    "name": "punctuation.katex.paren.close"
+                }
+            },
+            "contentName": "variable.parameter"
+        }
+    }
+}

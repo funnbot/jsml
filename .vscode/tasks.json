@@ -55,5 +55,10 @@
                 ]
             }
         },
+        {
+            "label": "install theme",
+            "type": "shell",
+            "group": "build"
+        }
     ]
 }

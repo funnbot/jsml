@@ -1,0 +1,27 @@
+{
+    "name": "jsml-syntax-highlighting",
+    "publisher": "funnbot",
+    "displayName": "jsml-syntax-highlighting",
+    "description": "highlight jsml",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.59.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "grammars": [
+            {
+                "scopeName": "jsml-comment.injection",
+                "path": "./syntaxes/jsml-comment.injection.json",
+                "injectTo": [
+                    "source.js"
+                ],
+                "embeddedLanguages": {
+                    "meta.embedded.block.javascript": "javascript"
+                }
+            }
+        ]
+    }
+}
