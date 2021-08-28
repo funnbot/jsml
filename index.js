@@ -8,6 +8,9 @@ const jsml = require("./lib/jsml.js");
 const { execSync } = require("child_process");
 hl.registerLanguage("javascript", require("highlight.js/lib/languages/javascript"));
 
+const highlight = str => hl.highlight(str, { language: "javascript" }).value
+const math = str => katex.renderToString(str, { throwOnError: false, output: "html" });
+
 class Elem {
     #tag = ""; #props = {}; #inner = "";
 
@@ -175,33 +178,16 @@ function display({ text, code }) {
     return doc;
 }
 
-const highlight = str => hl.highlight(str, { language: "javascript" }).value
-const math = str => katex.renderToString(str, { throwOnError: false, output: "html" });
-
 const template = fs.readFileSync(path.resolve(__dirname, path.join("resources", "template.html")));
 const templateInsert = "<TEMPLATE_INSERT>";
 const insert = template.findIndex((v, i, a) => v === templateInsert.charCodeAt(0) && a.subarray(i + 1, i + templateInsert.length).toString() === templateInsert.slice(1));
-
 const inputFile = process.argv[2];
 let inputParsed = path.parse(inputFile);
-
-
-const outputFile = path.format(inputParsed);
-console.log(outputFile);
-
 const parsedFile = parse(inputFile);
-
 const renderedFile = display(parsedFile);
 const output = template.subarray(0, insert).toString() + renderedFile.toString() + template.subarray(insert + templateInsert.length, template.length).toString();
-//fs.writeFileSync(outputFile, output);
-
-// fs.mkdirSync("build/styles", {recursive: true});
-// const distrib = path.resolve(__dirname, "distrib");
-// if (!fs.existsSync(distrib + "/", "build/", )) fs.cpSync(distrib + "/", "build/", {recursive: true});
-
-//var html = fs.readFileSync('./build/index.html', 'utf8');
-var options = { localUrlAccess: true, base: "file://" + __dirname + "/distrib/" };
-pdf.create(output, options).toFile("./" + inputParsed.name + ".pdf", function(err, res) {
+var options = { localUrlAccess: true, base: path.join("file://", __dirname, "distrib") };
+pdf.create(output, options).toFile(inputParsed.name + ".pdf", function(err, res) {
   if (err) return console.log(err);
   console.log("Finished.");
 });
