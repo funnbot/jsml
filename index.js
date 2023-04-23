@@ -12,7 +12,7 @@ const highlight = str => hl.highlight(str, { language: "javascript" }).value
 const math = str => katex.renderToString(str, { throwOnError: false, output: "html" });
 
 class Elem {
-    #tag = ""; #props = {}; #inner = "";
+    #tag = ""; #props = { }; #inner = "";
 
     constructor(tag) { this.#tag = tag; }
 
@@ -22,8 +22,8 @@ class Elem {
 
     #formatProps() { return Object.keys(this.#props).map(k => `${k}="${this.#props[k]}"`).join(" "); }
 
-    static h1(str) { return new Elem("h1").inner(str); }
-    static h2(str) { return new Elem("h2").inner(str); }
+    static h1(str) { return new Elem("h2").inner(str); }
+    static h2(str) { return new Elem("h3").inner(str); }
     static p(str) { return new Elem("p").inner(str); }
     static pre(str) { return new Elem("pre").inner(str); }
 }
@@ -66,15 +66,19 @@ class Matrix {
 // stepImply(output) //{step} 
 function parse(filepath) {
     const file = fs.readFileSync(filepath, "utf-8").toString();
-    const fileCode = rewire(path.resolve(process.cwd(), filepath));
-    fileCode.__set__({
-        stepInput: jsml.stepInput,
-        stepEqual: jsml.stepEqual,
-    })
+    let runcodeIndex = 0, runcodeValue = [];
+    let tempFile = file.replace(/\/\/r (.+)/g, (_, match) => "\/* \/\/r *\/ module.exports.__JSML__" + (runcodeIndex++) + " () { " + match + " }\n");
+    tempFile = tempFile.replace("//")
+    tempFile = "const { stepInput, stepEqual, stepImply } = require(\"\")\n";
+
+    const tempPath = "out/" + path.parse(filepath).name + ".js";
+    fs.writeFileSync(tempPath, tempFile);
+    const fileCode = require(path.resolve(process.cwd(), filepath));
+    // fs.rmSync(tempPath);
 
     let text = [];
-    let code = {};
 
+    let runcodeIndex = 0;
     let i = 0;
     while (i < file.length) {
         let char = file[i];
@@ -94,7 +98,7 @@ function parse(filepath) {
             else if (op === "t") text.push({ style: "title", str: readTill() });
             else if (op === "s") text.push({ style: "subtitle", str: readTill() });
             else if (op === "i") text.push({ style: "include", data: parse(readTill()) })
-            else if (op === "r") text.push({ style: "run", code: readTill() })
+            else if (op === "r") text.push({ style: "run", funcName: })
             else if (op === "c") {
                 const funcName = readTill();
                 i++; // skip newline
@@ -112,19 +116,19 @@ function parse(filepath) {
                     }
                     i++;
                 }
-                text.push({ style: "code", funcName })
-                code[funcName] = {
-                    str: file.slice(start, end + 1),
-                    func: fileCode.__get__(funcName),
-                };
+                text.push({ style: "code", str: file.slice(start, end + 1) })
+                // code[funcName] = {
+                //     str: file.slice(start, end + 1),
+                //     func: fileCode.__get__(funcName),
+                // };
             }
         }
         i++;
     }
-    return { text, code };
+    return { text, fileCode, runcodeValue };
 }
 
-function display({ text, code }) {
+function display({ text, fileCode, runcodeValue }) {
     let doc = new Doc();
     for (let i = 0; i < text.length; i++) {
         const t = text[i];
@@ -152,26 +156,30 @@ function display({ text, code }) {
             }
             doc.push(Elem.p(fmt));
         }
-        else if (t.style === "code") doc.push(new Elem("pre").inner(highlight(code[t.funcName].str)));
-        else if (t.style === "include") doc.push(display(t.data).toString())
+        else if (t.style === "code") doc.push(new Elem("pre").inner(highlight(t.str)));
+        else if (t.style === "include") {
+            doc.push(display(t.data).toString())
+        }
         else if (t.style === "run") {
-            const callRegex = /^([\w\d_-]+)\((.*)\);?$/;
+            const callRegex = /^([^\(]+)\((.*)\);?$/;
             const callParsed = callRegex.exec(t.code);
             const [_, funcName, argsText] = callParsed;
             try {
                 var args = eval("[" + argsText + "]");
+                code[funcName].func(...args);
             } catch (e) {
-                doc.push(new Elem("code").prop("style", "font-color: red;").inner(e.message));
+                doc.push(new Elem("code").inner(highlight(t.code)));
+                doc.push(new Elem("code").prop("style", "color: red;").inner(e.message));
                 continue;
             }
-            code[funcName].func(...args);
             let elem;
             while ((elem = jsml._steps[funcName].shift()) !== undefined) {
                 let delim = "";
                 if (elem.type === "equal") delim = "=";
                 else if (elem.type === "imply") delim = "=>";
-
+                
                 doc.push(math(delim + elem.obj.toString()));
+                doc.push(new Elem("p").prop("class", "overlay").inner(elem.note));
             }
         }
     }
@@ -181,13 +189,21 @@ function display({ text, code }) {
 const template = fs.readFileSync(path.resolve(__dirname, path.join("resources", "template.html")));
 const templateInsert = "<TEMPLATE_INSERT>";
 const insert = template.findIndex((v, i, a) => v === templateInsert.charCodeAt(0) && a.subarray(i + 1, i + templateInsert.length).toString() === templateInsert.slice(1));
-const inputFile = process.argv[2];
+
+const argv = process.argv.slice(2);
+if (argv.indexOf("--html") > -1) var doHtmlOnly = true;
+
+const inputFile = argv[argv.length - 1];
 let inputParsed = path.parse(inputFile);
 const parsedFile = parse(inputFile);
 const renderedFile = display(parsedFile);
 const output = template.subarray(0, insert).toString() + renderedFile.toString() + template.subarray(insert + templateInsert.length, template.length).toString();
-var options = { localUrlAccess: true, base: path.join("file://", __dirname, "distrib") };
-pdf.create(output, options).toFile(inputParsed.name + ".pdf", function(err, res) {
-  if (err) return console.log(err);
-  console.log("Finished.");
-});
+if (!doHtmlOnly) {
+    var options = { format: "Letter", localUrlAccess: true, base: "file://" + path.join(__dirname, "distrib/") };
+    pdf.create(output, options).toFile(path.join("out", inputParsed.name + ".pdf"), function (err, res) {
+        if (err) return console.log(err);
+        console.log("Finished.");
+    });
+} else {
+    fs.writeFileSync(path.join("out", inputParsed.name + ".html"), output);
+}
